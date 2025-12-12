@@ -39,16 +39,16 @@ gdb ./level0
 (gdb) disas main
 Dump of assembler code for function main:
 	# Stack initialization
-	0x08048ec0 <+0>:	push   %ebp
-	0x08048ec1 <+1>:	mov    %esp,%ebp
-	0x08048ec3 <+3>:	and    $0xfffffff0,%esp
-	0x08048ec6 <+6>:	sub    $0x20,%esp
+	0x08048ec0 <+0>:	push   %ebp                   # Save Base Pointer (EBP) value
+	0x08048ec1 <+1>:	mov    %esp,%ebp              # Set EBP to the top (ESP)
+	0x08048ec3 <+3>:	and    $0xfffffff0,%esp       # Memory alignment (16 bytes)
+	0x08048ec6 <+6>:	sub    $0x20,%esp             # Allocate Stack memory (32 bytes)
 
 	# Use input
-	0x08048ec9 <+9>:	mov    0xc(%ebp),%eax
-	0x08048ecc <+12>:	add    $0x4,%eax
-	0x08048ecf <+15>:	mov    (%eax),%eax
-	0x08048ed1 <+17>:	mov    %eax,(%esp)
+	0x08048ec9 <+9>:	mov    0xc(%ebp),%eax         #
+	0x08048ecc <+12>:	add    $0x4,%eax              #
+	0x08048ecf <+15>:	mov    (%eax),%eax            #
+	0x08048ed1 <+17>:	mov    %eax,(%esp)            #
 	0x08048ed4 <+20>:	call   0x8049710 <atoi>       # Call to function atoi
 	0x08048ed9 <+25>:	cmp    $0x1a7,%eax            # Compare the result with a special number : 423 -> probably the right solution
 
@@ -75,7 +75,7 @@ Dump of assembler code for function main:
 	0x08048f32 <+114>:	mov    %eax,0x4(%esp)
 	0x08048f36 <+118>:	mov    0x18(%esp),%eax
 	0x08048f3a <+122>:	mov    %eax,(%esp)
-	0x08048f3d <+125>:	call   0x8054690 <setresuid>
+	0x08048f3d <+125>:	call   0x8054690 <setresuid>  #
 	0x08048f42 <+130>:	lea    0x10(%esp),%eax
 	0x08048f46 <+134>:	mov    %eax,0x4(%esp)
 	0x08048f4a <+138>:	movl   $0x80c5348,(%esp)

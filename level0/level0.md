@@ -45,7 +45,7 @@ Dump of assembler code for function main:
 	0x08048ec6 <+6>:	sub    $0x20,%esp             # Allocate Stack memory (32 bytes)
 
 	# Use input
-	0x08048ec9 <+9>:	mov    0xc(%ebp),%eax         #
+	0x08048ec9 <+9>:	mov    0xc(%ebp),%eax         # Store the return address and the arguments in eax
 	0x08048ecc <+12>:	add    $0x4,%eax              #
 	0x08048ecf <+15>:	mov    (%eax),%eax            #
 	0x08048ed1 <+17>:	mov    %eax,(%esp)            #

@@ -1,4 +1,4 @@
-# Level 1
+# Level 2
 
 https://perso.liris.cnrs.fr/lionel.brunie/documents/notes-correction-attaque-buffer-overflow.pdf
 
@@ -6,17 +6,19 @@ https://perso.liris.cnrs.fr/lionel.brunie/documents/notes-correction-attaque-buf
 
 ```bash
 $ id
-uid=2030(level1) gid=2030(level1) groups=2030(level1),100(users)
+uid=2021(level2) gid=2021(level2) groups=2021(level2),100(users)
 ```
 
 ## 2. Home directory
 
 ```bash
 $ pwd
-/home/user/level1
+/home/user/level2
 
 $ ls -la
--rwsr-s---+ 1 level2 users  5138 Mar  6  2016 level1
+[...]
+-rwsr-s---+ 1 level3 users  5403 Mar  6  2016 level2
+[...]
 ```
 
 ## 3. Analyzing the file
@@ -24,11 +26,13 @@ $ ls -la
 Testing it :
 
 ```bash
-$ ./level1
+$ ./level2
 
 ```
 
-Nothing...
+Expects an input and prints it
+
+Nothing else...
 
 **Let's use gdb**
 

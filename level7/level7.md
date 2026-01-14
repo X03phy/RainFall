@@ -4,11 +4,14 @@
 
 ```bash
 $ id
-uid=2064(level6) gid=2064(level6) groups=2064(level6),100(users)
+uid=2024(level7) gid=2024(level7) groups=2024(level7),100(users)
+
+$ pwd
+/home/user/level7
 
 $ ls -la
 [...]
--rwsr-s---+ 1 level8 users 5648 Mar 9 2016 level7
+-rwsr-s---+ 1 level8 users  5648 Mar  9  2016 level7
 [...]
 ```
 

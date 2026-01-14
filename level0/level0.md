@@ -1,20 +1,18 @@
-# Level 0
+# Level0
 
-## 1. Identity
+## 1. Context
 
 ```bash
 $ id
 uid=2020(level0) gid=2020(level0) groups=2020(level0),100(users)
-```
 
-## 2. Home directory
-
-```bash
 $ pwd
 /home/user/level0
 
 $ ls -la
+[...]
 -rwsr-x---+ 1 level1 users  747441 Mar  6  2016 level0
+[...]
 ```
 
 ## 3. Analyzing the file

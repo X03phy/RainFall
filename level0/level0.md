@@ -15,7 +15,7 @@ $ ls -la
 [...]
 ```
 
-## 3. Analyzing the file
+## 2. Program behavior
 
 Testing it :
 
@@ -28,6 +28,8 @@ No !
 ```
 
 Our program expects an input, but which one ?
+
+## 3. Code overview
 
 **For this problem, we need to use gdb.**
 

@@ -26,36 +26,33 @@ Expects two inputs and prints `Hello input1`.
 
 ## 3. Code overview
 
-We have only a `main()` function.
-The program reads `av[1]` and converts it to an integer.
-If `nb <= 9`, it copies `nb * 4` bytes from `av[2]` to a 40-byte buffer -> buffer overflow.
-Then, it launches a shell if `nb == 0x574f4c46`, otherwise exits the program. 
+The program expects exactly **two arguments**.
+
+It builds a 72-byte buffer by:
+- copying up to **40 bytes** from `av[1]`
+- then copying up to **32 bytes** `from av[2]`
+
+It reads the `LANG` environment variable:
+- "fi" -> Finnish greeting
+- "nl" -> Dutch greeting
+- otherwise -> English greeting
+
+`greetuser() :`
+- copies a greeting into a **64-byte local buffer**
+- appends the user-controlled string with `strcat()`
+- prints the result
 
 ## 4. Exploit
 
-We have to find a way to validate `nb <= 9` and `nb == 0x574f4c46`.
+`strcat()` does no bounds checking.
+The combined greeting + user input can **overflow the 64-byte buffer**.
+This allows a **stack-based buffer overflow** in `greetuser()`.
 
-The vulnerability is an **integer overflow leading to a buffer overflow**, caused by the **combination** of `atoi()` **and** `memcpy()`.
-
-Just to know : `0x574f4c46 = 1464814662 = "FLOW"`.
-
-Our `int` is **32 bits**. When multiplying a large negative value by `4`, the result overflows.
-Only the **lower 32 bits are kept**.
-
-We can provide a **negative number** so it can **overflow**.
-
-See the `main.c`.
-
-`-2147483637` is perfect.
+**User input is safely copied in `main()`, but unsafely concatenated in `greetuser()`.**
 
 ## 5. Getting the flag
 
 ```bash
-$ ./bonus1 -2147483637 $(python -c 'print "A"*40 + "\x46\x4c\x4f\x57"')
-$ whoami
-bonus2
-$ cat /home/user/bonus2/.pass
-579bd19263eb8655e4cf7b742d75edf8c38226925d78db8163506f5191825245
 ```
 
 End of simulation
